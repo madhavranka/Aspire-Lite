@@ -1,0 +1,11 @@
+{
+  "development": {
+    "username": "madhavranka",
+    "password": "pAss@123!",
+    "database": "aspiredb",
+    "host": "127.0.0.1",
+    "dialect": "postgres",
+    "port": 5432,
+    "use_env_variable": 0
+  }
+}
