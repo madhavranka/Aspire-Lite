@@ -11,6 +11,7 @@ export interface LoanAttributes {
   repaymentSchedule: any;
   noOfInstallments: number;
   status: string;
+  createdAt?: Date | string;
 }
 
 class LoanModel extends Model<LoanAttributes> implements LoanAttributes {

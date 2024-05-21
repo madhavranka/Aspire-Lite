@@ -1,12 +1,12 @@
 import { LoanAttributes } from "src/database/models/loan";
-import Loan from "../models/Loan";
+import Loan, { LoanData } from "../models/Loan";
 import PaymentService from "./PaymentService";
 import EncryptionService from "./EncryptionService";
 import logger from "../logger";
 import { ParamsDictionary } from "express-serve-static-core";
 
 class LoanService {
-  static async createLoanRequest(data: any) {
+  static async createLoanRequest(data: any): Promise<LoanData> {
     try {
       const newLoanData: LoanAttributes = {
         customerId: data.customerId,
@@ -46,9 +46,10 @@ class LoanService {
           data
         );
         if (data.status === "APPROVED") {
-          //TODO : remove this query
-          const loan = new Loan(parseInt(decryptedLoanId));
-          const loanData = await loan.get(customerId);
+          const loanData = await Loan.get(
+            parseInt(decryptedLoanId),
+            customerId
+          );
           PaymentService.createInstallments(loanData);
         }
         return result;
@@ -63,13 +64,11 @@ class LoanService {
     }
   }
 
-  static async getLoanById(params: ParamsDictionary) {
-    console.log(params);
+  static async getLoanById(params: ParamsDictionary): Promise<LoanData | any> {
     const loanId = EncryptionService.decrypt(params.loanId);
     const customerId: number = parseInt(params.customerId);
     if (loanId) {
-      const loan = new Loan(parseInt(loanId));
-      let result = await loan.get(customerId);
+      let result = await Loan.get(parseInt(loanId), customerId);
       return { ...result, id: loanId };
     }
     return null;

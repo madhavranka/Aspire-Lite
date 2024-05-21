@@ -72,13 +72,15 @@ describe("LoanService", () => {
       const data = { status: "APPROVED" };
       const loanData = { id: decryptedLoanId, customerId, ...data };
 
-      const loanInstance = new Loan();
+      const loanInstance = Loan;
 
       jest.spyOn(loanInstance, "get").mockResolvedValueOnce(loanData);
 
       jest
-        .spyOn(Loan.prototype, "get")
-        .mockImplementationOnce(() => loanInstance.get(loanData.customerId));
+        .spyOn(loanInstance, "get")
+        .mockImplementationOnce(() =>
+          loanInstance.get(parseInt(loanId), customerId)
+        );
 
       mockedLoan.update.mockResolvedValueOnce(loanData as any);
 
@@ -88,7 +90,10 @@ describe("LoanService", () => {
         { id: parseInt(decryptedLoanId), customerId },
         data
       );
-      expect(loanInstance.get).toHaveBeenCalledWith(customerId);
+      expect(loanInstance.get).toHaveBeenCalledWith(
+        parseInt(decryptedLoanId),
+        customerId
+      );
       expect(PaymentService.createInstallments).toHaveBeenCalledWith(loanData);
     });
 
@@ -120,20 +125,23 @@ describe("LoanService", () => {
       const decryptedLoanId = "1";
       const loanData = { id: decryptedLoanId, customerId };
 
-      const loanInstance = new Loan();
+      const loanInstance = Loan;
 
       jest.spyOn(loanInstance, "get").mockResolvedValueOnce(loanData);
 
       jest
-        .spyOn(Loan.prototype, "get")
+        .spyOn(loanInstance, "get")
         .mockImplementationOnce(() =>
-          loanInstance.get(parseInt(loanData.customerId))
+          loanInstance.get(parseInt(loanId), parseInt(customerId))
         );
 
       const result = await LoanService.getLoanById({ customerId, loanId });
 
       expect(result).toEqual({ ...loanData, id: loanId });
-      expect(loanInstance.get).toHaveBeenCalledWith(parseInt(customerId));
+      expect(loanInstance.get).toHaveBeenCalledWith(
+        parseInt(loanId),
+        parseInt(customerId)
+      );
     });
 
     it("should return null if loanId is null", async () => {
