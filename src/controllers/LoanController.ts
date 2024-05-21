@@ -1,15 +1,15 @@
 import { Request, Response } from "express";
 import LoanService from "../services/LoanService";
+import logger from "../logger";
 
 export class LoanController {
   static async getLoanById(req: Request, res: Response) {
     try {
-      const loan = await LoanService.getLoanById(
-        parseInt(req.params.customerId),
-        req.params.loanId
-      );
+      const loan = await LoanService.getLoanById(req.params);
       res.status(200).json(loan);
-    } catch (error: any) {}
+    } catch (error: any) {
+      logger.error(`Error getting Loan by Id ${error.message}`);
+    }
   }
 
   static async createLoanRequest(req: Request, res: Response): Promise<void> {

@@ -18,7 +18,6 @@ class Loan {
           "interest",
           "remainingAmount",
           "currency",
-          "customerId",
           "noOfInstallments",
           "status",
           "createdAt",

@@ -3,6 +3,7 @@ import Loan from "../models/Loan";
 import PaymentService from "./PaymentService";
 import EncryptionService from "./EncryptionService";
 import logger from "../logger";
+import { ParamsDictionary } from "express-serve-static-core";
 
 class LoanService {
   static async createLoanRequest(data: any) {
@@ -62,10 +63,12 @@ class LoanService {
     }
   }
 
-  static async getLoanById(customerId: number, loanId: string | null) {
+  static async getLoanById(params: ParamsDictionary) {
+    console.log(params);
+    const loanId = EncryptionService.decrypt(params.loanId);
+    const customerId: number = parseInt(params.customerId);
     if (loanId) {
-      const decryptedLoanId: string = EncryptionService.decrypt(loanId);
-      const loan = new Loan(parseInt(decryptedLoanId));
+      const loan = new Loan(parseInt(loanId));
       let result = await loan.get(customerId);
       return { ...result, id: loanId };
     }

@@ -115,7 +115,7 @@ describe("LoanService", () => {
 
   describe("getLoanById", () => {
     it("should return loan details by ID", async () => {
-      const customerId = 1;
+      const customerId = "1";
       const loanId = "encryptedLoanId";
       const decryptedLoanId = "1";
       const loanData = { id: decryptedLoanId, customerId };
@@ -126,16 +126,18 @@ describe("LoanService", () => {
 
       jest
         .spyOn(Loan.prototype, "get")
-        .mockImplementationOnce(() => loanInstance.get(loanData.customerId));
+        .mockImplementationOnce(() =>
+          loanInstance.get(parseInt(loanData.customerId))
+        );
 
-      const result = await LoanService.getLoanById(customerId, loanId);
+      const result = await LoanService.getLoanById({ customerId, loanId });
 
       expect(result).toEqual({ ...loanData, id: loanId });
-      expect(loanInstance.get).toHaveBeenCalledWith(customerId);
+      expect(loanInstance.get).toHaveBeenCalledWith(parseInt(customerId));
     });
 
     it("should return null if loanId is null", async () => {
-      const result = await LoanService.getLoanById(1, null);
+      const result = await LoanService.getLoanById({ customerId: "1" });
       expect(result).toBeNull();
     });
   });
