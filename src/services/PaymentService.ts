@@ -3,6 +3,7 @@ import PaymentModel, { Status } from "../database/models/payment";
 import EncryptionService from "./EncryptionService";
 import Loan from "../models/Loan";
 import { getDates } from "../utils/dateUtil";
+import logger from "../logger";
 
 class PaymentService {
   static async createPaymentEntry(data: any): Promise<void> {
@@ -11,7 +12,7 @@ class PaymentService {
         await PaymentModel.create(data);
       }
     } catch (error: any) {
-      console.log(error);
+      logger.error(`Error creating payment entry ${error.message}`);
       throw new Error("Error creating payment entry");
     }
   }

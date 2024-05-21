@@ -6,6 +6,9 @@ import loanRouter from "./routes/loanRoutes";
 import { secretValidation } from "./middlewares/validation";
 import paymentRoutes from "./routes/paymentRoutes";
 
+import logger from "./logger";
+logger.info("Hello, world!");
+
 const app = express();
 const port = 3000;
 app.use(express.json());

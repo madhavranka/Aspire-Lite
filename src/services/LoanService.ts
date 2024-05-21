@@ -1,8 +1,8 @@
 import { LoanAttributes } from "src/database/models/loan";
-import { LoanRequest } from "../middlewares/validation";
 import Loan from "../models/Loan";
 import PaymentService from "./PaymentService";
 import EncryptionService from "./EncryptionService";
+import logger from "../logger";
 
 class LoanService {
   static async createLoanRequest(data: any) {
@@ -25,7 +25,9 @@ class LoanService {
         id: EncryptionService.encrypt(loan.id?.toString() ?? ""),
       };
     } catch (error: any) {
-      console.log(error.message);
+      logger.error(
+        `Error creating loan request for customer ${data.customerId}`
+      );
       throw new Error(`Error creating Loan Request `);
     }
   }
@@ -42,7 +44,6 @@ class LoanService {
           { id: parseInt(decryptedLoanId), customerId },
           data
         );
-        console.log(result);
         if (data.status === "APPROVED") {
           //TODO : remove this query
           const loan = new Loan(parseInt(decryptedLoanId));
@@ -54,7 +55,7 @@ class LoanService {
         return {};
       }
     } catch (error: any) {
-      console.log(
+      logger.error(
         `Error creating payment installment entries for loan ${loanId} ${error.message}`
       );
       throw new Error(`Error updating loan request`);

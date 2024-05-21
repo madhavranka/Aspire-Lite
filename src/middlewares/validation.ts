@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import logger from "../logger";
 import * as yup from "yup";
 
 export const LoanRequestSchema = yup.object().shape({
@@ -34,12 +35,11 @@ export type LoanRequest = yup.InferType<typeof LoanRequestSchema>;
 const validateRequest =
   (schema: yup.ObjectSchema<any>) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body);
     try {
       await schema.validate(req.body.data, { abortEarly: false });
       next();
     } catch (error: any) {
-      console.log(error);
+      logger.info(`Validating request failed ${error.message}`);
       res.status(400).json({
         message: "Validation error",
         errors: error.errors,
@@ -54,7 +54,7 @@ export const validateRequestParams =
       await schema.validate(req.params, { abortEarly: false });
       next();
     } catch (error: any) {
-      console.log(error);
+      logger.info(`Validating request params failed ${error.message}`);
       res.status(400).json({
         message: "Validation error",
         errors: error.errors,
@@ -76,7 +76,7 @@ export const validateEditLoanRequest =
       );
       next();
     } catch (error: any) {
-      console.log(error);
+      logger.info(`Validating Edit Loan Request failed ${error.message}`);
       res.status(400).json({
         message: "Validation error",
         errors: error.errors,
