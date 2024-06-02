@@ -1,5 +1,5 @@
 import Payment from "../models/Payment";
-import PaymentModel, { Status } from "../database/models/payment";
+import { Status } from "../database/models/payment";
 import EncryptionService from "./EncryptionService";
 import Loan from "../models/Loan";
 import { getDates } from "../utils/dateUtil";
@@ -9,7 +9,8 @@ class PaymentService {
   static async createPaymentEntry(data: any): Promise<void> {
     try {
       if (data) {
-        await PaymentModel.create(data);
+        const paymentTableObject = new Payment();
+        await paymentTableObject.save(data);
       }
     } catch (error: any) {
       logger.error(`Error creating payment entry ${error.message}`);
@@ -73,23 +74,21 @@ class PaymentService {
       const decryptedPaymentId: number = parseInt(
         EncryptionService.decrypt(paymentId)
       );
-      const paymentObject = (
-        await new Payment(decryptedPaymentId).get()
-      ).toJSON();
+      const paymentTableObject = new Payment();
+      const paymentObject = await paymentTableObject.get(decryptedPaymentId);
       if (paymentObject && paymentObject.LoanModel) {
         if (amount && amount > paymentObject.amount) {
           paymentObject.amount = amount;
         }
-        const updatedPaymentEntry = (
-          await Payment.update(
-            {
-              id: paymentObject.id,
-              status: Status.PENDING,
-              amount: paymentObject.amount,
-            },
-            { status: Status.PAID }
-          )
-        )?.toJSON();
+        const updatedPaymentEntry = await paymentTableObject.update(
+          {
+            id: paymentObject.id,
+            status: Status.PENDING,
+            amount: paymentObject.amount,
+          },
+          { status: Status.PAID }
+        );
+
         if (updatedPaymentEntry && updatedPaymentEntry.status === Status.PAID) {
           const loan = paymentObject.LoanModel;
           //update remainingAmount in loan
@@ -102,7 +101,8 @@ class PaymentService {
           if (loan.remainingAmount <= paymentObject.amount) {
             loanUpdateValues = { ...loanUpdateValues, status: "PAID" };
           }
-          Loan.update({ id: loan.id }, loanUpdateValues);
+          const loanTableObject = new Loan();
+          loanTableObject.update({ id: loan.id }, loanUpdateValues);
         }
         return true;
       } else {

@@ -2,6 +2,20 @@ import { Request, Response } from "express";
 import LoanService from "../services/LoanService";
 import logger from "../logger";
 
+export type LoanDataResponse = {
+  id: string;
+  customerId: number;
+  principal: number;
+  interest: number;
+  remainingAmount: number;
+  currency: string;
+  noOfInstallments: number;
+  repaymentSchedule: any;
+  status: string;
+  updatedAt?: string;
+  createdAt?: Date | string;
+};
+
 export class LoanController {
   static async getLoanById(req: Request, res: Response) {
     try {

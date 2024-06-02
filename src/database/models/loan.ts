@@ -2,7 +2,7 @@
 import { Model, DataTypes, Sequelize } from "sequelize";
 
 export interface LoanAttributes {
-  id?: number;
+  id?: number | null;
   customerId: number;
   principal: number;
   interest: number;

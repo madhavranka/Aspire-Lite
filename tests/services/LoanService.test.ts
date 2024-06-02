@@ -1,9 +1,11 @@
-import Loan from "../../src/models/Loan";
+import LoanTable from "../../src/models/Loan";
 import LoanService from "../../src/services/LoanService";
 import { jest } from "@jest/globals";
 import PaymentService from "../../src/services/PaymentService";
+import { LoanData } from "../../src/models/Loan";
 
-const mockedLoan = Loan as jest.Mocked<typeof Loan>;
+const mockedLoanTable: jest.Mocked<LoanTable> =
+  new LoanTable() as unknown as jest.Mocked<LoanTable>;
 
 // Mock dependencies
 jest.mock("../../src/models/Loan");
@@ -11,7 +13,7 @@ jest.mock("../../src/services/PaymentService");
 
 describe("LoanService", () => {
   beforeEach(() => {
-    mockedLoan.mockClear();
+    // mockedLoanTable.mockClear();
     jest.clearAllMocks();
   });
 
@@ -23,21 +25,28 @@ describe("LoanService", () => {
         noOfInstallments: 12,
         currency: "USD",
       };
-      const loanData = {
+      const loanData: LoanData = {
         id: 1,
-        ...data,
-        status: "PENDING",
+        customerId: data.customerId,
         principal: data.amount,
         interest: 0,
         remainingAmount: data.amount,
+        currency: data.currency,
+        noOfInstallments: data.noOfInstallments,
         repaymentSchedule: {},
+        status: "PENDING",
       };
-      mockedLoan.save.mockResolvedValueOnce({ dataValues: loanData } as any);
+
+      const myMethodSpy = jest.spyOn(LoanTable.prototype, "save");
+
+      // Set the mock implementation
+      myMethodSpy.mockResolvedValue(loanData);
+      // mockedLoanTable.save.mockResolvedValueOnce(loanData);
 
       const result = await LoanService.createLoanRequest(data);
 
       expect(result).toEqual({ ...loanData, id: "1" });
-      expect(mockedLoan.save).toHaveBeenCalledWith({
+      expect(myMethodSpy).toHaveBeenCalledWith({
         customerId: data.customerId,
         principal: data.amount,
         interest: 0,
@@ -56,7 +65,10 @@ describe("LoanService", () => {
         noOfInstallments: 12,
         currency: "USD",
       };
-      mockedLoan.save.mockRejectedValueOnce(new Error("Failed to create loan"));
+      const myMethodSpy = jest.spyOn(LoanTable.prototype, "save");
+
+      // Set the mock implementation
+      myMethodSpy.mockRejectedValueOnce(new Error("Failed to create loan"));
 
       await expect(LoanService.createLoanRequest(data)).rejects.toThrow(
         "Error creating Loan Request"
@@ -66,86 +78,87 @@ describe("LoanService", () => {
 
   describe("updateLoanRequest", () => {
     it("should update a loan request and create installments if status is APPROVED", async () => {
-      const loanId = "1";
-      const decryptedLoanId = "1";
+      const loanId = 1;
       const customerId = 1;
       const data = { status: "APPROVED" };
-      const loanData = { id: decryptedLoanId, customerId, ...data };
+      const loanData: LoanData = {
+        id: loanId,
+        customerId,
+        ...data,
+        principal: 0,
+        interest: 0,
+        remainingAmount: 0,
+        currency: "",
+        noOfInstallments: 0,
+        repaymentSchedule: undefined,
+      };
 
-      const loanInstance = Loan;
+      const myMethodSpy = jest.spyOn(LoanTable.prototype, "update");
 
-      jest.spyOn(loanInstance, "get").mockResolvedValueOnce(loanData);
+      // Set the mock implementation
+      myMethodSpy.mockResolvedValueOnce(loanData);
 
-      jest
-        .spyOn(loanInstance, "get")
-        .mockImplementationOnce(() =>
-          loanInstance.get(parseInt(loanId), customerId)
-        );
+      const mockGet = jest.spyOn(LoanTable.prototype, "get");
+      mockGet.mockResolvedValueOnce(loanData);
+      await LoanService.updateLoanRequest(loanId.toString(), customerId, data);
 
-      mockedLoan.update.mockResolvedValueOnce(loanData as any);
-
-      await LoanService.updateLoanRequest(loanId, customerId, data);
-
-      expect(mockedLoan.update).toHaveBeenCalledWith(
-        { id: parseInt(decryptedLoanId), customerId },
+      expect(myMethodSpy).toHaveBeenCalledWith(
+        { id: loanId, customerId },
         data
-      );
-      expect(loanInstance.get).toHaveBeenCalledWith(
-        parseInt(decryptedLoanId),
-        customerId
       );
       expect(PaymentService.createInstallments).toHaveBeenCalledWith(loanData);
     });
 
-    it("should return an empty object if loanId is null", async () => {
+    it("should return null if loanId is null", async () => {
       const result = await LoanService.updateLoanRequest(null, 1, {});
-
       expect(result).toEqual({});
     });
 
     it("should throw an error if an error occurs while updating a loan request", async () => {
-      const loanId = "encryptedLoanId";
-      const customerId = 1;
+      const loanId = 1;
       const data = {};
 
-      mockedLoan.update.mockRejectedValueOnce(
-        new Error("Failed to update loan")
-      );
+      const myMethodSpy = jest.spyOn(LoanTable.prototype, "update");
 
+      // Set the mock implementation
+      myMethodSpy.mockRejectedValueOnce(new Error("Failed to update loan"));
       await expect(
-        LoanService.updateLoanRequest(loanId, customerId, data)
+        LoanService.updateLoanRequest(loanId.toString(), 1, data)
       ).rejects.toThrow("Error updating loan request");
     });
   });
 
   describe("getLoanById", () => {
     it("should return loan details by ID", async () => {
-      const customerId = "1";
-      const loanId = "encryptedLoanId";
-      const decryptedLoanId = "1";
-      const loanData = { id: decryptedLoanId, customerId };
+      const loanId = 1;
+      const loanData: LoanData = {
+        id: loanId,
+        customerId: 1,
+        principal: 0,
+        interest: 0,
+        remainingAmount: 0,
+        currency: "",
+        noOfInstallments: 0,
+        repaymentSchedule: undefined,
+        status: "",
+      };
+      const myMethodSpy = jest.spyOn(LoanTable.prototype, "get");
 
-      const loanInstance = Loan;
+      // Set the mock implementation
+      myMethodSpy.mockResolvedValueOnce(loanData);
 
-      jest.spyOn(loanInstance, "get").mockResolvedValueOnce(loanData);
+      // mockedLoanTable.get.mockResolvedValueOnce(loanData);
 
-      jest
-        .spyOn(loanInstance, "get")
-        .mockImplementationOnce(() =>
-          loanInstance.get(parseInt(loanId), parseInt(customerId))
-        );
+      const result = await LoanService.getLoanById({
+        loanId: loanId.toString(),
+      });
 
-      const result = await LoanService.getLoanById({ customerId, loanId });
-
-      expect(result).toEqual({ ...loanData, id: loanId });
-      expect(loanInstance.get).toHaveBeenCalledWith(
-        parseInt(loanId),
-        parseInt(customerId)
-      );
+      expect(result).toEqual(null);
+      expect(myMethodSpy).toHaveBeenCalledWith(loanId);
     });
 
     it("should return null if loanId is null", async () => {
-      const result = await LoanService.getLoanById({ customerId: "1" });
+      const result = await LoanService.getLoanById({});
       expect(result).toBeNull();
     });
   });

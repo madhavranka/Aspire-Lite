@@ -5,6 +5,7 @@ import EncryptionService from "../../src/services/EncryptionService";
 import Loan from "../../src/models/Loan";
 import Payment from "../../src/models/Payment";
 import { getDates } from "../../src/utils/dateUtil";
+import LoanTable from "../../src/models/Loan";
 
 jest.mock("../../src/database/models/payment");
 jest.mock("../../src/services/EncryptionService");
@@ -23,11 +24,12 @@ describe("PaymentService", () => {
         currency: "USD",
       };
 
-      (PaymentModel.create as jest.Mock).mockResolvedValueOnce(paymentData);
+      const mockSave = jest.spyOn(Payment.prototype, "save");
+      mockSave.mockResolvedValueOnce(paymentData);
 
       await PaymentService.createPaymentEntry(paymentData);
 
-      expect(PaymentModel.create).toHaveBeenCalledWith(paymentData);
+      expect(mockSave).toHaveBeenCalledWith(paymentData);
     });
 
     it("should throw an error when creation fails", async () => {
@@ -39,9 +41,8 @@ describe("PaymentService", () => {
         currency: "USD",
       };
 
-      (PaymentModel.create as jest.Mock).mockRejectedValueOnce(
-        new Error("Error creating payment entry")
-      );
+      const mockSave = jest.spyOn(Payment.prototype, "save");
+      mockSave.mockRejectedValueOnce(new Error("Error creating payment entry"));
 
       await expect(
         PaymentService.createPaymentEntry(paymentData)
@@ -94,22 +95,23 @@ describe("PaymentService", () => {
   });
 
   describe("createInstallmentData", () => {
+    const d: Date = new Date();
     it("should create installment data", () => {
       const loanData = {
         remainingAmount: 1000,
         noOfInstallments: 4,
         repaymentSchedule: { frequency: 1, type: "W" },
-        createdAt: new Date(),
+        createdAt: d,
       };
 
       const expectedInstallments = [
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
       ];
 
-      (getDates as jest.Mock).mockReturnValue(new Date());
+      (getDates as jest.Mock).mockReturnValue(d);
 
       const result = PaymentService.createInstallmentData(loanData);
 
@@ -117,21 +119,22 @@ describe("PaymentService", () => {
     });
 
     it("should create installment data", () => {
+      const d: Date = new Date();
       const loanData = {
         remainingAmount: 1000,
         noOfInstallments: 4,
         repaymentSchedule: {},
-        createdAt: new Date(),
+        createdAt: d,
       };
 
       const expectedInstallments = [
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
-        { amount: 250, scheduleDate: new Date() },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
+        { amount: 250, scheduleDate: d },
       ];
 
-      (getDates as jest.Mock).mockReturnValue(new Date());
+      (getDates as jest.Mock).mockReturnValue(d);
 
       const result = PaymentService.createInstallmentData(loanData);
 
@@ -153,24 +156,27 @@ describe("PaymentService", () => {
       (EncryptionService.decrypt as jest.Mock).mockReturnValue(
         decryptedPaymentId
       );
-      (Payment.prototype.get as jest.Mock).mockResolvedValueOnce({
-        toJSON: () => paymentObject,
+      const mockGet = jest.spyOn(Payment.prototype, "get");
+      mockGet.mockResolvedValueOnce(paymentObject);
+
+      const mockUpdate = jest.spyOn(Payment.prototype, "update");
+      mockUpdate.mockResolvedValueOnce({
+        ...paymentObject,
+        status: Status.PAID,
       });
-      (Payment.update as jest.Mock).mockResolvedValueOnce({
-        toJSON: () => ({ ...paymentObject, status: Status.PAID }),
-      });
-      (Loan.update as jest.Mock).mockImplementation(jest.fn());
+
+      (new LoanTable().update as jest.Mock).mockImplementation(jest.fn());
 
       const result = await PaymentService.markAsPaid(paymentId);
 
       expect(result).toBe(true);
       expect(EncryptionService.decrypt).toHaveBeenCalledWith(paymentId);
       expect(Payment.prototype.get).toHaveBeenCalled();
-      expect(Payment.update).toHaveBeenCalledWith(
+      expect(mockUpdate).toHaveBeenCalledWith(
         { id: 1, status: Status.PENDING, amount: 100 },
         { status: Status.PAID }
       );
-      expect(Loan.update).toHaveBeenCalledWith(
+      expect(LoanTable.prototype.update).toHaveBeenCalledWith(
         { id: 1 },
         { remainingAmount: 0, status: "PAID" }
       );

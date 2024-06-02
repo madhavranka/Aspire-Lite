@@ -4,9 +4,10 @@ import PaymentService from "./PaymentService";
 import EncryptionService from "./EncryptionService";
 import logger from "../logger";
 import { ParamsDictionary } from "express-serve-static-core";
+import { LoanDataResponse } from "../controllers/LoanController";
 
 class LoanService {
-  static async createLoanRequest(data: any): Promise<LoanData> {
+  static async createLoanRequest(data: any): Promise<LoanDataResponse> {
     try {
       const newLoanData: LoanAttributes = {
         customerId: data.customerId,
@@ -15,21 +16,20 @@ class LoanService {
         remainingAmount: data.amount,
         currency: data.currency ?? "USD",
         noOfInstallments: data.noOfInstallments,
-        repaymentSchedule: {
-          /* Your JSON data */
-        },
+        repaymentSchedule: {},
         status: "PENDING",
       };
-      const loan = (await Loan.save(newLoanData))?.dataValues;
+      const loanTableObject = new Loan();
+      const loan = await loanTableObject.save(newLoanData);
       return {
         ...loan,
         id: EncryptionService.encrypt(loan.id?.toString() ?? ""),
       };
     } catch (error: any) {
       logger.error(
-        `Error creating loan request for customer ${data.customerId}`
+        `Error creating loan request for customer ${data.customerId} ${error}`
       );
-      throw new Error(`Error creating Loan Request `);
+      throw new Error(`Error creating Loan Request ${error.message}`);
     }
   }
 
@@ -41,18 +41,16 @@ class LoanService {
     try {
       if (loanId) {
         const decryptedLoanId: string = EncryptionService.decrypt(loanId);
-        const result = await Loan.update(
+        const loanTableObject = new Loan();
+        let result = await loanTableObject.update(
           { id: parseInt(decryptedLoanId), customerId },
           data
         );
         if (data.status === "APPROVED") {
-          const loanData = await Loan.get(
-            parseInt(decryptedLoanId),
-            customerId
-          );
+          const loanData = await loanTableObject.get(parseInt(decryptedLoanId));
           PaymentService.createInstallments(loanData);
         }
-        return result;
+        return { ...result, id: loanId };
       } else {
         return {};
       }
@@ -68,8 +66,12 @@ class LoanService {
     const loanId = EncryptionService.decrypt(params.loanId);
     const customerId: number = parseInt(params.customerId);
     if (loanId) {
-      let result = await Loan.get(parseInt(loanId), customerId);
-      return { ...result, id: loanId };
+      const loanTableObject = new Loan();
+      let result = await loanTableObject.get(parseInt(loanId));
+      if (result?.customerId === customerId) {
+        return { ...result, id: params.loanId };
+      }
+      return null;
     }
     return null;
   }

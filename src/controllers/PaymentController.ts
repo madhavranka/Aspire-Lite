@@ -17,7 +17,7 @@ export class PaymentController {
         req.params.paymentId,
         req.body.amount
       );
-      res.status(200).json({});
+      res.status(200).json({ message: "Payment marked as paid" });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
