@@ -1,8 +1,7 @@
 // tests/services/PaymentService.test.ts
 import PaymentService from "../../src/services/PaymentService";
-import PaymentModel, { Status } from "../../src/database/models/payment";
+import { Status } from "../../src/database/models/payment";
 import EncryptionService from "../../src/services/EncryptionService";
-import Loan from "../../src/models/Loan";
 import Payment from "../../src/models/Payment";
 import { getDates } from "../../src/utils/dateUtil";
 import LoanTable from "../../src/models/Loan";

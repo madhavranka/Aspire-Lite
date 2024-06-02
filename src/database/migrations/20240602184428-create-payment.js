@@ -1,5 +1,4 @@
 const { DataTypes } = require("sequelize");
-
 const { Status } = require("../../../dist/database/models/payment");
 module.exports = {
   async up(queryInterface) {
@@ -26,8 +25,12 @@ module.exports = {
           defaultValue: "USD",
         },
         customerId: {
-          type: DataTypes.STRING,
+          type: DataTypes.INTEGER,
           allowNull: false,
+          references: {
+            model: "user",
+            key: "id",
+          },
         },
         loanId: {
           type: DataTypes.INTEGER,

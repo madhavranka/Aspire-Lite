@@ -2,6 +2,8 @@ import { Options, Sequelize } from "sequelize";
 import { initializeLoan } from "../database/models/loan";
 import { initializePayment } from "../database/models/payment";
 import path from "path";
+import { initializeRole } from "../database/models/role";
+import { initializeUser } from "../database/models/user";
 
 export const getJsonData = () => {
   const fs = require("fs");
@@ -44,6 +46,8 @@ const connect = async () => {
     await sequelize.authenticate();
     initializeLoan(sequelize);
     initializePayment(sequelize);
+    initializeRole(sequelize);
+    initializeUser(sequelize);
     console.log("Connected to the database");
   } catch (error) {
     console.error("Unable to connect to the database:", error);

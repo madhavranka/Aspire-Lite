@@ -51,6 +51,10 @@ export const initializeLoan = (sequelize: Sequelize) => {
       currency: { type: DataTypes.STRING },
       customerId: {
         type: DataTypes.INTEGER,
+        references: {
+          model: "user",
+          key: "id",
+        },
       },
       noOfInstallments: {
         type: DataTypes.INTEGER,

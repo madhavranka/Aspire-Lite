@@ -21,6 +21,10 @@ module.exports = {
         currency: { type: DataTypes.STRING },
         customerId: {
           type: DataTypes.INTEGER,
+          references: {
+            model: "user",
+            key: "id",
+          },
         },
         noOfInstallments: {
           type: DataTypes.INTEGER,

@@ -7,6 +7,7 @@ import validateRequest, {
   GetLoanSchema,
   updateLoanSchema,
   validateEditLoanRequest,
+  validateUserAccessToLoan,
 } from "../middlewares/validation";
 
 const loanRouter = express.Router();
@@ -14,6 +15,7 @@ const loanRouter = express.Router();
 loanRouter.get(
   "/:loanId/:customerId",
   validateRequestParams(GetLoanSchema),
+  validateUserAccessToLoan,
   LoanController.getLoanById
 );
 
@@ -26,6 +28,7 @@ loanRouter.post(
 loanRouter.put(
   "/:loanId/:customerId",
   validateEditLoanRequest(GetLoanSchema, updateLoanSchema),
+  validateUserAccessToLoan,
   LoanController.updateLoanRequest
 );
 

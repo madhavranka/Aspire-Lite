@@ -36,24 +36,46 @@ class LoanService {
   static async updateLoanRequest(
     loanId: string | null,
     customerId: number,
-    data: any
+    data: {
+      principal?: number;
+      currency?: string;
+      noOfInstallments?: number;
+      repaymentSchedule?: any;
+      status?: string;
+    },
+    userRole?: string
   ) {
     try {
+      let result: any = {};
       if (loanId) {
         const decryptedLoanId: string = EncryptionService.decrypt(loanId);
         const loanTableObject = new Loan();
-        let result = await loanTableObject.update(
-          { id: parseInt(decryptedLoanId), customerId },
-          data
-        );
-        if (data.status === "APPROVED") {
-          const loanData = await loanTableObject.get(parseInt(decryptedLoanId));
-          PaymentService.createInstallments(loanData);
+        const loanData = await loanTableObject.get(parseInt(decryptedLoanId));
+        let result: any = {};
+        if (loanData?.status && loanData.status === "PENDING") {
+          if (data.status === "APPROVED") {
+            if (userRole === "admin") {
+              result = await loanTableObject.update(
+                { id: parseInt(decryptedLoanId), customerId },
+                data
+              );
+              PaymentService.createInstallments(loanData);
+              return { ...result, id: loanId };
+            } else {
+              return null;
+            }
+          } else {
+            result = await loanTableObject.update(
+              { id: parseInt(decryptedLoanId), customerId },
+              data
+            );
+            return { ...result, id: loanId };
+          }
+        } else {
+          return { ...loanData, id: loanId };
         }
-        return { ...result, id: loanId };
-      } else {
-        return {};
       }
+      return result;
     } catch (error: any) {
       logger.error(
         `Error creating payment installment entries for loan ${loanId} ${error.message}`

@@ -94,6 +94,28 @@ export const secretValidation = async (
     res.sendStatus(403);
     return;
   }
+  // console.log(req.headers);
+  //FOR TESTING PURPOSE ONLY OTHERWISE needs to be done at the time of login/authentication
+  req.session.userId = parseInt(
+    typeof req.headers?.userid === "string" ? req.headers?.userid : ""
+  );
+  req.session.role =
+    typeof req.headers?.role === "string" ? req.headers?.role : "";
+  next();
+};
+
+export const validateUserAccessToLoan = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (
+    req.session.role !== "admin" &&
+    req.session.userId !== parseInt(req.params.customerId)
+  ) {
+    res.sendStatus(403);
+    return;
+  }
   next();
 };
 export default validateRequest;

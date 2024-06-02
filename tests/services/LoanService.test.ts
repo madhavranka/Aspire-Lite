@@ -99,14 +99,22 @@ describe("LoanService", () => {
       myMethodSpy.mockResolvedValueOnce(loanData);
 
       const mockGet = jest.spyOn(LoanTable.prototype, "get");
-      mockGet.mockResolvedValueOnce(loanData);
-      await LoanService.updateLoanRequest(loanId.toString(), customerId, data);
+      mockGet.mockResolvedValueOnce({ ...loanData, status: "PENDING" });
+      await LoanService.updateLoanRequest(
+        loanId.toString(),
+        customerId,
+        data,
+        "admin"
+      );
 
       expect(myMethodSpy).toHaveBeenCalledWith(
         { id: loanId, customerId },
         data
       );
-      expect(PaymentService.createInstallments).toHaveBeenCalledWith(loanData);
+      expect(PaymentService.createInstallments).toHaveBeenCalledWith({
+        ...loanData,
+        status: "PENDING",
+      });
     });
 
     it("should return null if loanId is null", async () => {
@@ -117,13 +125,27 @@ describe("LoanService", () => {
     it("should throw an error if an error occurs while updating a loan request", async () => {
       const loanId = 1;
       const data = {};
+      const loanData: LoanData = {
+        id: loanId,
+        customerId: 2,
+        status: "PENDING",
+        principal: 0,
+        interest: 0,
+        remainingAmount: 0,
+        currency: "",
+        noOfInstallments: 0,
+        repaymentSchedule: undefined,
+      };
 
       const myMethodSpy = jest.spyOn(LoanTable.prototype, "update");
 
       // Set the mock implementation
       myMethodSpy.mockRejectedValueOnce(new Error("Failed to update loan"));
+
+      const mockGet = jest.spyOn(LoanTable.prototype, "get");
+      mockGet.mockResolvedValueOnce({ ...loanData, status: "PENDING" });
       await expect(
-        LoanService.updateLoanRequest(loanId.toString(), 1, data)
+        LoanService.updateLoanRequest(loanId.toString(), 1, data, "admin")
       ).rejects.toThrow("Error updating loan request");
     });
   });

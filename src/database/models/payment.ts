@@ -62,8 +62,12 @@ export const initializePayment = (sequelize: Sequelize) => {
         defaultValue: "USD",
       },
       customerId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER,
         allowNull: false,
+        references: {
+          model: "user",
+          key: "id",
+        },
       },
       loanId: {
         type: DataTypes.INTEGER,

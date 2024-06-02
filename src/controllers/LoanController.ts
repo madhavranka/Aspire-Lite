@@ -40,9 +40,10 @@ export class LoanController {
       const loan = await LoanService.updateLoanRequest(
         req.params.loanId,
         parseInt(req.params.customerId),
-        req.body.data
+        req.body.data,
+        req.session.role
       );
-      res.status(200).json(loan);
+      loan ? res.status(200).json(loan) : res.sendStatus(403);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
